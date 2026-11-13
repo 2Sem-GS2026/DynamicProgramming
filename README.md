@@ -1,20 +1,8 @@
-# DynamicProgramming
-
 # CalçadaLivre
 
-## Ficha da CitizenTech
+Sistema de demonstração de acessibilidade urbana. Permite visualizar em uma cidade, registrar problemas nas calçadas e calcular rotas considerando diferentes perfis de circulação.
 
-| Campo | Preenchimento |
-|---|---|
-| Nome da CitizenTech | CalçadaLivre |
-| Cidade e bairro | São Paulo, Bela Vista |
-| Cidadão beneficiado | Pessoas com mobilidade reduzida (cadeirantes, idosos, pessoas com carrinho de bebê) que circulam a pé pelo trecho. Perfil entrevistado: adulto de 35 a 45 anos, usuário de cadeira de rodas manual, que se desloca diariamente do metrô Trianon-MASP até o trabalho, na região da Av. Paulista. Hoje evita calçadas com degraus, buracos e obstruções por tentativa e erro, sem informação prévia sobre o estado do trecho. |
-| Problema, em uma frase | Pessoas com mobilidade reduzida não sabem quais calçadas estão livres ou obstruídas antes de sair de casa e acabam encontrando barreiras no meio do caminho. |
-| Como funciona | Moradores registram obstáculos nas calçadas (buraco, degrau, obstrução, falta de rampa). O sistema guarda os registros, marca cada um como verificado ou não, sugere rotas acessíveis e ajuda a priorizar o que deve ser consertado. |
-| O que cada parte faz | **Agile:** documenta o design da solução. **Database:** estrutura e guarda trechos, ocorrências e usuários no Oracle. **DDD-Java:** API REST sobre o banco. **Dynamic Programming:** calcula a melhor rota acessível em grafo. **AR-VR:** vídeo 3D que simula a rota. **Network:** rede da base comunitária que hospeda o servidor. |
-| Link do repositório | https://github.com/2Sem-GS2026 |
-| Indicador de impacto | (1) % de trechos com acessibilidade verificada, calculado a partir de `status_verificacao`; (2) tempo médio entre o registro e a resolução de uma ocorrência, calculado a partir de `data_registro` e `data_resolucao`. Os três campos existem no modelo do banco e na API. |
-| ODS conectados | **ODS 11 (metas 11.2 e 11.7):** rotas acessíveis facilitam o deslocamento seguro e o acesso a pontos de transporte, e o mapeamento das calçadas busca tornar o espaço público acessível, com atenção a pessoas com deficiência e idosos. **ODS 10 (meta 10.2):** promove a inclusão social e econômica de pessoas com mobilidade reduzida, independentemente de idade ou deficiência. **ODS 9 (meta 9.1):** usa dados colaborativos e tecnologia para apoiar a manutenção da infraestrutura urbana de calçadas, com foco em acesso equitativo. |
+O objetivo principal é demonstrar que o menor caminho nem sempre é o caminho mais acessível.
 
 ## Integrantes
 
@@ -23,3 +11,112 @@
 | Enrico Bagli Borges | 562541 |
 | Henrique Infanti Coratolo | 561865  |
 | João Gabriel Boaventura Marques e Silva | 569298 |
+
+Turma: 2ESR | Disciplina: Dynamic Programming | Global Solution 2026.2 - CitizenTech
+
+## Funcionalidades
+
+- Visualização gráfica da Cidade Modelo com Matplotlib.
+- Cadastro de problemas nas calçadas, por lado e intervalo do trecho.
+- Tipos de problema: em construção, piso irregular, calçada quebrada, obstáculo e ausência de rampa.
+- Persistência dos problemas em JSON.
+- Cálculo de rotas com o algoritmo de Dijkstra.
+- Memoização do cálculo de rotas, com invalidação quando os problemas mudam.
+- Perfil padrão e perfil cadeirante.
+- Bloqueio de trechos interditados nos dois lados.
+
+## Tecnologias
+
+- Python 3
+- Matplotlib
+- JSON
+- `heapq` (fila de prioridade do Dijkstra)
+
+## Técnicas algorítmicas
+
+### Grafos: Dijkstra
+
+A cidade é modelada como um grafo não direcionado. Os cruzamentos são os vértices e os trechos de calçada são as arestas, com a distância em metros como peso.
+
+Antes da busca, `rotas.py` filtra os trechos permitidos pelo perfil escolhido e monta a lista de adjacência apenas com eles. O Dijkstra então encontra o menor caminho entre origem e destino. Quando não existe caminho válido, o sistema informa que não há rota disponível.
+
+Complexidade: O((V + E) log V), com V = 20 cruzamentos e E = 33 trechos.
+
+### Programação Dinâmica: memoização
+
+O cálculo de rota é registrado em um cache indexado pela tripla (origem, destino, perfil). Consultas repetidas com os mesmos parâmetros retornam o resultado armazenado, sem executar o Dijkstra novamente.
+
+O cache depende do estado dos trechos. Por isso, ele é limpo sempre que um problema é cadastrado, porque o cadastro altera as interdições e as condições do piso.
+
+Complexidade:
+- Consulta inédita: O((V + E) log V), igual ao Dijkstra sem cache.
+- Consulta repetida: O(1), com uma busca no dicionário.
+
+A escolha se justifica porque o mapa muda apenas no cadastro de problemas, enquanto as consultas de rota são frequentes. Assim, o cache reaproveita resultados entre cadastros sem arriscar respostas desatualizadas.
+
+## Estrutura
+
+```text
+calcadalivre-DynamicProgramming/
+├── main.py          # Menu, interface de terminal e visualização
+├── cidade.py        # Cruzamentos, coordenadas e conexões da cidade
+├── modelos.py       # Estruturas de dados (Trecho e Problema)
+├── rotas.py         # Dijkstra, memoização e regras dos perfis
+├── problemas.py     # Cadastro, validação, persistência e aplicação de problemas
+├── problemas.json   # Problemas cadastrados
+├── requirements.txt # Dependências
+└── README.md
+```
+
+## Instalação
+
+```bash
+pip install -r requirements.txt
+```
+
+## Execução
+
+```bash
+python main.py
+```
+
+No menu principal:
+
+```text
+1 - Visualizar mapa
+2 - Cadastrar problema
+3 - Calcular rota
+4 - Listar problemas
+0 - Sair
+```
+
+### Cadastrar problema
+
+1. Informe o cruzamento inicial e o cruzamento final (somente as letras).
+2. Escolha o lado afetado: esquerdo, direito ou ambos. O lado é definido olhando do cruzamento de origem para o de destino.
+3. Informe a distância inicial e final do problema, em metros, medidas a partir do cruzamento inicial.
+4. Escolha o tipo e a gravidade (1 leve, 2 médio, 3 grave) e descreva o problema.
+
+### Calcular rota
+
+1. Informe a origem e o destino. Digite `sair` a qualquer momento para voltar ao menu.
+2. Escolha o perfil:
+   - Padrão: considera a distância e as interdições físicas.
+   - Cadeirante: além disso, exige inclinação de até 8,33%, rampa existente e piso em boas condições.
+
+## Regras de acessibilidade
+
+| Tipo de problema | Efeito |
+|------------------|--------|
+| Em construção | Interdita o lado afetado. Interdição nos dois lados com sobreposição de intervalo bloqueia o trecho. |
+| Obstáculo | Mesma regra de "Em construção". |
+| Piso irregular | Piso passa a "irregular". Impede somente o perfil cadeirante. |
+| Calçada quebrada | Piso passa a "ruim". Impede somente o perfil cadeirante. |
+| Ausência de rampa | Remove a rampa do trecho. Impede somente o perfil cadeirante. |
+
+## Limitações conhecidas
+
+- Problemas de piso e rampa são aplicados ao trecho inteiro, mesmo quando cadastrados em apenas um lado.
+- A interdição de um só lado não é considerada no cálculo de rotas: o trecho continua disponível pelos dois lados enquanto não houver bloqueio completo.
+- A gravidade é armazenada, mas não influencia o cálculo.
+- O cálculo trabalha com trechos inteiros, não com calçadas independentes por lado.
