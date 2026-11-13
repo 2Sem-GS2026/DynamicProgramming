@@ -1,0 +1,22 @@
+[
+    {
+        "id": 1,
+        "trecho_id": 1,
+        "lado": "esquerdo",
+        "inicio": 0.0,
+        "fim": 5.0,
+        "tipo": "Obstáculo",
+        "gravidade": 3,
+        "descricao": "Poste no meio da calçada esquerda de A-B"
+    },
+    {
+        "id": 2,
+        "trecho_id": 5,
+        "lado": "direito",
+        "inicio": 2.0,
+        "fim": 6.0,
+        "tipo": "Calçada quebrada",
+        "gravidade": 2,
+        "descricao": "Placas quebradas no lado direito de F-G"
+    }
+]
